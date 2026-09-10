@@ -31,11 +31,9 @@ export const getUserById = (
 
   const id = Number(req.params.id);
 
-
   const user = users.find(
     (user) => user.id === id
   );
-
 
   if (!user) {
 
@@ -44,7 +42,6 @@ export const getUserById = (
     });
 
   }
-
 
   res.status(200).json({
     message: "User fetched successfully",
@@ -63,15 +60,15 @@ export const createUser = (
   res: Response
 ) => {
 
-  // Request body se name aur email lena
-  const { name, email } = req.body;
+  // Request body se data lena
+  const { name, email, role } = req.body;
 
 
   // Validation
-  if (!name || !email) {
+  if (!name || !email || !role) {
 
     return res.status(400).json({
-      message: "Name and email are required",
+      message: "Name, email and role are required",
     });
 
   }
@@ -91,10 +88,11 @@ export const createUser = (
     id: newId,
     name,
     email,
+    role,
   };
 
 
-  // Array mein user add
+  // User array mein add karo
   users.push(newUser);
 
 
@@ -121,7 +119,7 @@ export const updateUser = (
 
 
   // Body se data
-  const { name, email } = req.body;
+  const { name, email, role } = req.body;
 
 
   // User ka index find
@@ -140,11 +138,11 @@ export const updateUser = (
   }
 
 
-  // Name/email validation
-  if (!name || !email) {
+  // Validation
+  if (!name || !email || !role) {
 
     return res.status(400).json({
-      message: "Name and email are required",
+      message: "Name, email and role are required",
     });
 
   }
@@ -155,6 +153,7 @@ export const updateUser = (
     id,
     name,
     email,
+    role,
   };
 
 
@@ -197,10 +196,10 @@ export const patchUser = (
 
 
   // Body se optional data
-  const { name, email } = req.body;
+  const { name, email, role } = req.body;
 
 
-  // Agar name send kiya gaya
+  // Name update
   if (name !== undefined) {
 
     if (
@@ -219,7 +218,7 @@ export const patchUser = (
   }
 
 
-  // Agar email send kiya gaya
+  // Email update
   if (email !== undefined) {
 
     if (
@@ -234,6 +233,25 @@ export const patchUser = (
     }
 
     user.email = email;
+
+  }
+
+
+  // Role update
+  if (role !== undefined) {
+
+    if (
+      role !== "admin" &&
+      role !== "customer"
+    ) {
+
+      return res.status(400).json({
+        message: "Role must be admin or customer",
+      });
+
+    }
+
+    user.role = role;
 
   }
 
