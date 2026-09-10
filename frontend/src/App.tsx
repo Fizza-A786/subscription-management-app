@@ -1,9 +1,8 @@
-import {
+import React, {
+  useCallback,
   useEffect,
   useMemo,
   useState,
-  type ChangeEvent,
-  type FormEvent,
 } from "react";
 
 import {
@@ -20,18 +19,28 @@ import type {
   UserRole,
 } from "./types/user";
 
-import ThemeToggle from "../src/component/ThemeToggle";
-import Toast from "../src/component/Toast";
-import Modal from "../src/component/Modal";
-import UserForm from "../src/component/UserForm";
-import UserCard from "../src/component/UserCard";
+import ThemeToggle from "./component/ThemeToggle";
+import Toast from "./component/Toast";
+import Modal from "./component/Modal";
+import UserForm from "./component/UserForm";
+import UserCard from "./component/UserCard";
 
 import "./App.css";
 
+
+// ==========================================
+// Toast Type
+// ==========================================
+
 type ToastState = {
-  message: string;
   type: "success" | "error";
+  message: string;
 } | null;
+
+
+// ==========================================
+// Empty Form
+// ==========================================
 
 const emptyForm: UserFormData = {
   name: "",
@@ -39,17 +48,41 @@ const emptyForm: UserFormData = {
   role: "customer",
 };
 
-const App = () => {
-  const [users, setUsers] =
-    useState<User[]>([]);
+
+// ==========================================
+// App
+// ==========================================
+
+function App() {
+
+  // ==========================================
+  // Users
+  // ==========================================
+
+  const [users, setUsers] = useState<User[]>([]);
+
+
+  // ==========================================
+  // Form
+  // ==========================================
 
   const [formData, setFormData] =
     useState<UserFormData>(emptyForm);
 
+
+  // ==========================================
+  // Editing User
+  // ==========================================
+
   const [editingId, setEditingId] =
     useState<number | null>(null);
 
-  const [loadingUsers, setLoadingUsers] =
+
+  // ==========================================
+  // Loading
+  // ==========================================
+
+  const [loading, setLoading] =
     useState(false);
 
   const [submitting, setSubmitting] =
@@ -58,27 +91,54 @@ const App = () => {
   const [actionLoadingId, setActionLoadingId] =
     useState<number | null>(null);
 
+
+  // ==========================================
+  // Search
+  // ==========================================
+
   const [search, setSearch] =
     useState("");
+
+
+  // ==========================================
+  // Role Filter
+  // ==========================================
 
   const [roleFilter, setRoleFilter] =
     useState<"all" | UserRole>("all");
 
-  const [darkMode, setDarkMode] =
-    useState(() => {
-      const savedTheme =
-        localStorage.getItem(
-          "user-dashboard-theme"
-        );
 
-      return savedTheme === "dark";
-    });
+  // ==========================================
+  // Dark Mode
+  // ==========================================
+
+  const [darkMode, setDarkMode] = useState(() => {
+    const savedTheme =
+      localStorage.getItem("darkMode");
+
+    return savedTheme === "true";
+  });
+
+
+  // ==========================================
+  // Toast
+  // ==========================================
 
   const [toast, setToast] =
     useState<ToastState>(null);
 
+
+  // ==========================================
+  // Delete Modal
+  // ==========================================
+
   const [deleteId, setDeleteId] =
     useState<number | null>(null);
+
+
+  // ==========================================
+  // PATCH Modal
+  // ==========================================
 
   const [patchTarget, setPatchTarget] =
     useState<User | null>(null);
@@ -86,135 +146,247 @@ const App = () => {
   const [patchName, setPatchName] =
     useState("");
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
 
-  useEffect(() => {
-    localStorage.setItem(
-      "user-dashboard-theme",
-      darkMode ? "dark" : "light"
-    );
-  }, [darkMode]);
+  // ==========================================
+  // Fetch Users
+  // ==========================================
 
-  useEffect(() => {
-    if (!toast) {
-      return;
-    }
-
-    const timer =
-      setTimeout(() => {
-        setToast(null);
-      }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [toast]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
-      setLoadingUsers(true);
+      setLoading(true);
 
       const data = await getUsers();
 
       setUsers(data.users);
+
     } catch (error) {
+
       console.error(
         "Error fetching users:",
         error
       );
 
       setToast({
-        message: "Failed to fetch users",
         type: "error",
+        message: "Failed to load users",
       });
+
     } finally {
-      setLoadingUsers(false);
+
+      setLoading(false);
+
     }
-  };
+  }, []);
+
+
+  // ==========================================
+  // Initial API Request
+  // ==========================================
+
+  useEffect(() => {
+
+    let ignore = false;
+
+    const loadUsers = async () => {
+
+      try {
+
+        setLoading(true);
+
+        const data = await getUsers();
+
+        if (!ignore) {
+          setUsers(data.users);
+        }
+
+      } catch (error) {
+
+        if (!ignore) {
+
+          console.error(
+            "Error fetching users:",
+            error
+          );
+
+          setToast({
+            type: "error",
+            message: "Failed to load users",
+          });
+        }
+
+      } finally {
+
+        if (!ignore) {
+          setLoading(false);
+        }
+
+      }
+    };
+
+    loadUsers();
+
+    return () => {
+      ignore = true;
+    };
+
+  }, []);
+
+
+  // ==========================================
+  // Dark Mode
+  // ==========================================
+
+  useEffect(() => {
+
+    document.documentElement.classList.toggle(
+      "dark",
+      darkMode
+    );
+
+    localStorage.setItem(
+      "darkMode",
+      String(darkMode)
+    );
+
+  }, [darkMode]);
+
+
+  // ==========================================
+  // Handle Input Change
+  // ==========================================
 
   const handleChange = (
-    e: ChangeEvent<
+    event: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement
     >
   ) => {
+
     const {
       name,
       value,
-    } = e.target;
+    } = event.target;
 
-    setFormData((previous) => ({
-      ...previous,
-      [name]: value,
-    }));
+    setFormData(
+      (previous: UserFormData) => ({
+        ...previous,
+        [name]: value,
+      })
+    );
   };
 
+
+  // ==========================================
+  // Submit Form
+  // POST + PUT
+  // ==========================================
+
   const handleSubmit = async (
-    e: FormEvent<HTMLFormElement>
+    event: React.FormEvent
   ) => {
-    e.preventDefault();
+
+    event.preventDefault();
+
+
+    // ------------------------------------------
+    // Validation
+    // ------------------------------------------
 
     if (!formData.name.trim()) {
+
       setToast({
-        message: "Name is required",
         type: "error",
+        message: "Please enter a name",
       });
 
       return;
     }
+
 
     if (!formData.email.trim()) {
+
       setToast({
-        message: "Email is required",
         type: "error",
+        message: "Please enter an email",
       });
 
       return;
     }
 
+
     try {
+
       setSubmitting(true);
 
-      if (editingId === null) {
-        await createUser(formData);
 
-        setToast({
-          message:
-            "User created successfully",
-          type: "success",
-        });
-      } else {
+      // ----------------------------------------
+      // PUT
+      // ----------------------------------------
+
+      if (editingId !== null) {
+
         await updateUser(
           editingId,
           formData
         );
 
         setToast({
-          message:
-            "User updated successfully",
           type: "success",
+          message: "User updated successfully",
         });
+
       }
+
+
+      // ----------------------------------------
+      // POST
+      // ----------------------------------------
+
+      else {
+
+        await createUser(formData);
+
+        setToast({
+          type: "success",
+          message: "User created successfully",
+        });
+
+      }
+
+
+      // Refresh users
 
       await fetchUsers();
 
+      // Reset form
+
       resetForm();
+
     } catch (error) {
+
       console.error(
-        "Submit error:",
+        "Error saving user:",
         error
       );
 
       setToast({
-        message:
-          "Something went wrong",
         type: "error",
+        message: "Failed to save user",
       });
+
     } finally {
+
       setSubmitting(false);
+
     }
   };
 
+
+  // ==========================================
+  // Edit User
+  // ==========================================
+
   const handleEdit = (user: User) => {
+
     setEditingId(user.id);
 
     setFormData({
@@ -229,191 +401,252 @@ const App = () => {
     });
   };
 
+
+  // ==========================================
+  // Reset Form
+  // ==========================================
+
   const resetForm = () => {
+
     setEditingId(null);
-    setFormData(emptyForm);
+
+    setFormData({
+      ...emptyForm,
+    });
   };
 
-  const handlePatchOpen = (
-    user: User
-  ) => {
+
+  // ==========================================
+  // Open PATCH Modal
+  // ==========================================
+
+  const handlePatch = (user: User) => {
+
     setPatchTarget(user);
+
     setPatchName(user.name);
   };
 
-  const handlePatchSubmit =
-    async () => {
-      if (!patchTarget) {
-        return;
-      }
 
-      if (!patchName.trim()) {
-        setToast({
-          message: "Name cannot be empty",
-          type: "error",
-        });
+  // ==========================================
+  // PATCH User
+  // ==========================================
 
-        return;
-      }
+  const handlePatchSubmit = async () => {
 
-      try {
-        setActionLoadingId(
-          patchTarget.id
-        );
+    if (!patchTarget) {
+      return;
+    }
 
-        await patchUser(
-          patchTarget.id,
-          {
-            name: patchName,
-          }
-        );
 
-        setToast({
-          message:
-            "User name patched successfully",
-          type: "success",
-        });
+    if (!patchName.trim()) {
 
-        setPatchTarget(null);
-        setPatchName("");
+      setToast({
+        type: "error",
+        message: "Please enter a name",
+      });
 
-        await fetchUsers();
-      } catch (error) {
-        console.error(
-          "Patch error:",
-          error
-        );
+      return;
+    }
 
-        setToast({
-          message:
-            "Failed to patch user",
-          type: "error",
-        });
-      } finally {
-        setActionLoadingId(null);
-      }
-    };
 
-  const handleDelete = (
-    id: number
-  ) => {
-    setDeleteId(id);
+    try {
+
+      setActionLoadingId(
+        patchTarget.id
+      );
+
+
+      await patchUser(
+        patchTarget.id,
+        {
+          name: patchName,
+        }
+      );
+
+
+      setToast({
+        type: "success",
+        message: "User patched successfully",
+      });
+
+
+      setPatchTarget(null);
+
+      setPatchName("");
+
+
+      await fetchUsers();
+
+    } catch (error) {
+
+      console.error(
+        "Error patching user:",
+        error
+      );
+
+      setToast({
+        type: "error",
+        message: "Failed to patch user",
+      });
+
+    } finally {
+
+      setActionLoadingId(null);
+
+    }
   };
 
-  const confirmDelete =
-    async () => {
-      if (deleteId === null) {
-        return;
-      }
 
-      try {
-        setActionLoadingId(deleteId);
+  // ==========================================
+  // Delete User
+  // ==========================================
 
-        await deleteUser(deleteId);
+  const handleDelete = async () => {
 
-        setToast({
-          message:
-            "User deleted successfully",
-          type: "success",
-        });
+    if (deleteId === null) {
+      return;
+    }
 
-        if (editingId === deleteId) {
-          resetForm();
-        }
 
-        setDeleteId(null);
+    try {
 
-        await fetchUsers();
-      } catch (error) {
-        console.error(
-          "Delete error:",
-          error
-        );
+      setActionLoadingId(deleteId);
 
-        setToast({
-          message:
-            "Failed to delete user",
-          type: "error",
-        });
-      } finally {
-        setActionLoadingId(null);
-      }
-    };
+
+      await deleteUser(deleteId);
+
+
+      setToast({
+        type: "success",
+        message: "User deleted successfully",
+      });
+
+
+      setDeleteId(null);
+
+
+      await fetchUsers();
+
+    } catch (error) {
+
+      console.error(
+        "Error deleting user:",
+        error
+      );
+
+      setToast({
+        type: "error",
+        message: "Failed to delete user",
+      });
+
+    } finally {
+
+      setActionLoadingId(null);
+
+    }
+  };
+
+
+  // ==========================================
+  // Filter Users
+  // ==========================================
 
   const filteredUsers = useMemo(() => {
-    const searchValue =
-      search.toLowerCase().trim();
 
     return users.filter((user) => {
+
       const matchesSearch =
         user.name
           .toLowerCase()
-          .includes(searchValue) ||
+          .includes(
+            search.toLowerCase()
+          ) ||
+
         user.email
           .toLowerCase()
-          .includes(searchValue);
+          .includes(
+            search.toLowerCase()
+          );
+
 
       const matchesRole =
         roleFilter === "all" ||
         user.role === roleFilter;
+
 
       return (
         matchesSearch &&
         matchesRole
       );
     });
+
   }, [
     users,
     search,
     roleFilter,
   ]);
 
-  const adminCount = users.filter(
-    (user) => user.role === "admin"
-  ).length;
+
+  // ==========================================
+  // Counts
+  // ==========================================
+
+  const adminCount =
+    users.filter(
+      (user) => user.role === "admin"
+    ).length;
+
 
   const customerCount =
     users.filter(
-      (user) =>
-        user.role === "customer"
+      (user) => user.role === "customer"
     ).length;
 
-  const deleteTarget =
-    users.find(
-      (user) => user.id === deleteId
-    );
+
+
+  // ==========================================
+  // RETURN UI
+  // ==========================================
 
   return (
+
     <div
-      className={`app ${
-        darkMode ? "dark" : ""
-      }`}
+      className={
+        darkMode
+          ? "app dark"
+          : "app"
+      }
     >
-      <div className="background-shape shape-one" />
-      <div className="background-shape shape-two" />
 
-      <main className="container">
-        <header className="header">
-          <div className="brand-area">
-            <div className="brand-icon">
-              U
-            </div>
 
-            <div>
-              <span className="eyebrow">
-                ADMIN DASHBOARD
-              </span>
+      {/* ========================================
+          HEADER
+      ======================================== */}
 
-              <h1>
-                User Management
-              </h1>
+      <header className="app-header">
 
-              <p>
-                Manage users, roles and
-                account information.
-              </p>
-            </div>
+        <div className="header-content">
+
+          <div>
+
+            <p className="eyebrow">
+              SUBSCRIPTION MANAGEMENT
+            </p>
+
+            <h1>
+              User Management
+            </h1>
+
+            <p className="header-description">
+              Manage users, roles and account
+              information from one place.
+            </p>
+
           </div>
+
+
+          {/* Theme Toggle */}
 
           <ThemeToggle
             darkMode={darkMode}
@@ -424,320 +657,402 @@ const App = () => {
               )
             }
           />
-        </header>
+
+        </div>
+
+      </header>
+
+
+
+      {/* ========================================
+          MAIN
+      ======================================== */}
+
+      <main className="app-main">
+
+
+        {/* ========================================
+            STATS
+        ======================================== */}
 
         <section className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon">
-              #
-            </div>
-
-            <div>
-              <span>Total Users</span>
-              <strong>
-                {users.length}
-              </strong>
-            </div>
-          </div>
 
           <div className="stat-card">
-            <div className="stat-icon">
-              A
-            </div>
 
-            <div>
-              <span>Admins</span>
-              <strong>
-                {adminCount}
-              </strong>
-            </div>
+            <span className="stat-label">
+              Total Users
+            </span>
+
+            <strong className="stat-value">
+              {users.length}
+            </strong>
+
           </div>
+
 
           <div className="stat-card">
-            <div className="stat-icon">
-              C
-            </div>
 
-            <div>
-              <span>Customers</span>
-              <strong>
-                {customerCount}
-              </strong>
-            </div>
+            <span className="stat-label">
+              Admins
+            </span>
+
+            <strong className="stat-value">
+              {adminCount}
+            </strong>
+
           </div>
+
+
+          <div className="stat-card">
+
+            <span className="stat-label">
+              Customers
+            </span>
+
+            <strong className="stat-value">
+              {customerCount}
+            </strong>
+
+          </div>
+
         </section>
 
-        <UserForm
-          formData={formData}
-          editingId={editingId}
-          loading={submitting}
-          onChange={handleChange}
-          onSubmit={handleSubmit}
-          onCancel={resetForm}
-        />
+
+
+        {/* ========================================
+            USER FORM
+        ======================================== */}
+
+        <section className="section">
+
+          <UserForm
+            formData={formData}
+            editingId={editingId}
+            loading={submitting}
+            onChange={handleChange}
+            onSubmit={handleSubmit}
+            onCancel={resetForm}
+          />
+
+        </section>
+
+
+
+        {/* ========================================
+            USERS
+        ======================================== */}
 
         <section className="users-section">
+
+
+          {/* Section Header */}
+
           <div className="section-header">
+
             <div>
-              <span className="section-label">
-                USER DIRECTORY
-              </span>
+
+              <p className="eyebrow">
+                USERS
+              </p>
 
               <h2>
                 All Users
               </h2>
 
-              <p>
-                {filteredUsers.length}{" "}
-                {filteredUsers.length === 1
-                  ? "user"
-                  : "users"}{" "}
-                found
-              </p>
             </div>
 
-            <div className="filters">
-              <div className="search-wrapper">
-                <span className="search-icon">
-                  ⌕
-                </span>
 
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) =>
-                    setSearch(
-                      e.target.value
-                    )
-                  }
-                  placeholder="Search name or email..."
-                />
+            <span className="user-count">
+              {filteredUsers.length} users
+            </span>
 
-                {search && (
-                  <button
-                    type="button"
-                    className="clear-search"
-                    onClick={() =>
-                      setSearch("")
-                    }
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-
-              <select
-                className="role-filter"
-                value={roleFilter}
-                onChange={(e) =>
-                  setRoleFilter(
-                    e.target.value as
-                      | "all"
-                      | UserRole
-                  )
-                }
-              >
-                <option value="all">
-                  All Roles
-                </option>
-
-                <option value="admin">
-                  Admin
-                </option>
-
-                <option value="customer">
-                  Customer
-                </option>
-              </select>
-            </div>
           </div>
 
-          {loadingUsers ? (
-            <div className="loading">
-              <div className="spinner" />
+
+
+          {/* ========================================
+              SEARCH + FILTER
+          ======================================== */}
+
+          <div className="filters">
+
+            <input
+              type="text"
+              placeholder="Search by name or email..."
+              value={search}
+              onChange={(event) =>
+                setSearch(
+                  event.target.value
+                )
+              }
+              className="search-input"
+            />
+
+
+            <select
+              value={roleFilter}
+              onChange={(event) =>
+                setRoleFilter(
+                  event.target.value as
+                    | "all"
+                    | UserRole
+                )
+              }
+              className="role-filter"
+            >
+
+              <option value="all">
+                All Roles
+              </option>
+
+              <option value="admin">
+                Admin
+              </option>
+
+              <option value="customer">
+                Customer
+              </option>
+
+            </select>
+
+          </div>
+
+
+
+          {/* ========================================
+              LOADING
+          ======================================== */}
+
+          {loading ? (
+
+            <div className="loading-state">
+
+              <div className="loader"></div>
+
               <p>
                 Loading users...
               </p>
+
             </div>
-          ) : filteredUsers.length >
-            0 ? (
+
+          ) : filteredUsers.length === 0 ? (
+
+            <div className="empty-state">
+
+              <h3>
+                No users found
+              </h3>
+
+              <p>
+                Try changing your search
+                or filter.
+              </p>
+
+            </div>
+
+          ) : (
+
             <div className="users-grid">
+
               {filteredUsers.map(
                 (user) => (
+
                   <UserCard
                     key={user.id}
                     user={user}
-                    onEdit={
-                      handleEdit
+                    onEdit={handleEdit}
+                    onPatch={handlePatch}
+                    onDelete={(id) =>
+                      setDeleteId(id)
                     }
-                    onPatch={
-                      handlePatchOpen
-                    }
-                    onDelete={
-                      handleDelete
-                    }
+
+
                     actionLoading={
                       actionLoadingId ===
                       user.id
                     }
                   />
+
                 )
               )}
-            </div>
-          ) : (
-            <div className="empty-state">
-              <div className="empty-icon">
-                ◌
-              </div>
 
-              <h3>
-                {search ||
-                roleFilter !== "all"
-                  ? "No users found"
-                  : "No users yet"}
-              </h3>
-
-              <p>
-                {search ||
-                roleFilter !== "all"
-                  ? "Try changing your search or filter."
-                  : "Add your first user using the form above."}
-              </p>
             </div>
+
           )}
+
         </section>
+
       </main>
 
+
+
+      {/* ========================================
+          TOAST
+      ======================================== */}
+
       {toast && (
+
         <Toast
-          message={toast.message}
           type={toast.type}
+          message={toast.message}
           onClose={() =>
             setToast(null)
           }
         />
+
       )}
 
-      {deleteTarget && (
+
+
+      {/* ========================================
+          DELETE MODAL
+      ======================================== */}
+
+      {deleteId !== null && (
+
         <Modal
           title="Delete User"
           onClose={() =>
             setDeleteId(null)
           }
         >
-          <div className="confirm-content">
-            <div className="confirm-icon">
-              !
-            </div>
 
-            <h3>
-              Delete{" "}
-              {deleteTarget.name}?
-            </h3>
+          <div className="modal-content">
 
             <p>
-              This action cannot be
-              undone. The user will be
-              permanently removed.
+              Are you sure you want to
+              delete this user?
             </p>
 
+            <p className="modal-warning">
+              This action cannot be undone.
+            </p>
+
+
             <div className="modal-actions">
+
               <button
                 type="button"
-                className="secondary-btn"
                 onClick={() =>
                   setDeleteId(null)
                 }
+                className="btn btn-secondary"
               >
                 Cancel
               </button>
 
+
               <button
                 type="button"
-                className="delete-btn"
-                onClick={confirmDelete}
+                onClick={handleDelete}
+                className="btn btn-danger"
                 disabled={
                   actionLoadingId ===
                   deleteId
                 }
               >
+
                 {actionLoadingId ===
                 deleteId
                   ? "Deleting..."
-                  : "Yes, Delete"}
+                  : "Delete"}
+
               </button>
+
             </div>
+
           </div>
+
         </Modal>
+
       )}
 
+
+
+      {/* ========================================
+          PATCH MODAL
+      ======================================== */}
+
       {patchTarget && (
+
         <Modal
           title="Patch User"
           onClose={() => {
+
             setPatchTarget(null);
+
             setPatchName("");
+
           }}
         >
-          <div className="patch-content">
-            <p className="modal-description">
-              PATCH updates only the
-              field you provide.
+
+          <div className="modal-content">
+
+            <p>
+              Update only the user's name.
             </p>
 
-            <div className="form-group">
-              <label htmlFor="patchName">
-                New Name
-              </label>
 
-              <input
-                id="patchName"
-                type="text"
-                value={patchName}
-                onChange={(e) =>
-                  setPatchName(
-                    e.target.value
-                  )
-                }
-              />
-            </div>
+            <input
+              type="text"
+              value={patchName}
+              onChange={(event) =>
+                setPatchName(
+                  event.target.value
+                )
+              }
+              placeholder="Enter new name"
+              className="modal-input"
+            />
+
 
             <div className="modal-actions">
+
               <button
                 type="button"
-                className="secondary-btn"
                 onClick={() => {
-                  setPatchTarget(
-                    null
-                  );
+
+                  setPatchTarget(null);
+
                   setPatchName("");
+
                 }}
+                className="btn btn-secondary"
               >
                 Cancel
               </button>
 
+
               <button
                 type="button"
-                className="primary-btn"
                 onClick={
                   handlePatchSubmit
                 }
+                className="btn btn-primary"
                 disabled={
                   actionLoadingId ===
                   patchTarget.id
                 }
               >
+
                 {actionLoadingId ===
                 patchTarget.id
                   ? "Updating..."
-                  : "Update Name"}
+                  : "Update"}
+
               </button>
+
             </div>
+
           </div>
+
         </Modal>
+
       )}
+
     </div>
   );
-};
+}
+
 
 export default App;
