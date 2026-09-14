@@ -1,16 +1,15 @@
 import axios from "axios";
+
 import type {
   User,
   UserFormData,
 } from "../../types/user";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "https://subscription-management-app-c1fa.onrender.com/api",
 });
 
-export const getUsers = async (): Promise<{
-  users: User[];
-}> => {
+export const getUsers = async (): Promise<User[]> => {
   const response = await api.get("/users");
 
   return response.data;

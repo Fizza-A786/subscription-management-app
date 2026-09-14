@@ -157,7 +157,7 @@ function App() {
 
       const data = await getUsers();
 
-      setUsers(data.users);
+      setUsers(data);
 
     } catch (error) {
 
@@ -196,7 +196,7 @@ function App() {
         const data = await getUsers();
 
         if (!ignore) {
-          setUsers(data.users);
+          setUsers(data);
         }
 
       } catch (error) {
