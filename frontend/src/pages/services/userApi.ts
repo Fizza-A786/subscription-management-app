@@ -12,9 +12,8 @@ const api = axios.create({
 export const getUsers = async (): Promise<User[]> => {
   const response = await api.get("/users");
 
-  return response.data;
+  return response.data.users;
 };
-
 export const getUserById = async (
   id: number
 ): Promise<User> => {
