@@ -16,13 +16,14 @@ const UserCard = ({
   actionLoading,
 }: UserCardProps) => {
   const firstLetter =
-    user.name.charAt(0).toUpperCase();
+    user.name.trim().charAt(0).toUpperCase();
 
   return (
     <article className="user-card">
+      {/* User information */}
       <div className="user-top">
         <div className="avatar">
-          {firstLetter}
+          {firstLetter || "U"}
         </div>
 
         <div className="user-info">
@@ -40,6 +41,7 @@ const UserCard = ({
         </div>
       </div>
 
+      {/* User metadata */}
       <div className="user-meta">
         <div>
           <span>User ID</span>
@@ -48,12 +50,14 @@ const UserCard = ({
 
         <div>
           <span>Status</span>
+
           <strong className="active-status">
             Active
           </strong>
         </div>
       </div>
 
+      {/* Actions */}
       <div className="user-actions">
         <button
           type="button"
@@ -61,7 +65,7 @@ const UserCard = ({
           onClick={() => onEdit(user)}
           disabled={actionLoading}
         >
-          Edit
+          {actionLoading ? "..." : "Edit"}
         </button>
 
         <button

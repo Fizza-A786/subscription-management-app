@@ -6,21 +6,12 @@ interface ModalProps {
   onClose: () => void;
 }
 
-const Modal = ({
-  title,
-  children,
-  onClose,
-}: ModalProps) => {
+const Modal = ({ title, children, onClose }: ModalProps) => {
   return (
-    <div
-      className="modal-overlay"
-      onClick={onClose}
-    >
+    <div className="modal-overlay" onClick={onClose}>
       <div
         className="modal"
-        onClick={(e) =>
-          e.stopPropagation()
-        }
+        onClick={(event) => event.stopPropagation()}
       >
         <div className="modal-header">
           <h3>{title}</h3>
@@ -29,6 +20,7 @@ const Modal = ({
             type="button"
             className="modal-close"
             onClick={onClose}
+            aria-label="Close modal"
           >
             ×
           </button>

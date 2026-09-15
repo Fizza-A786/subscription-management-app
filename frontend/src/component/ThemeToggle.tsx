@@ -9,10 +9,11 @@ const ThemeToggle = ({
 }: ThemeToggleProps) => {
   return (
     <button
+      type="button"
       className="theme-toggle"
       onClick={onToggle}
-      type="button"
-      aria-label="Toggle theme"
+      aria-label="Toggle dark and light mode"
+      title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
     >
       <span className="theme-icon">
         {darkMode ? "☀" : "☾"}

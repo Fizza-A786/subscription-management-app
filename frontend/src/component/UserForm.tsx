@@ -1,9 +1,4 @@
 import type {
-  ChangeEvent,
-  FormEvent,
-} from "react";
-
-import type {
   UserFormData,
 } from "../types/user";
 
@@ -12,12 +7,12 @@ interface UserFormProps {
   editingId: number | null;
   loading: boolean;
   onChange: (
-    e: ChangeEvent<
+    event: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement
     >
   ) => void;
   onSubmit: (
-    e: FormEvent<HTMLFormElement>
+    event: React.FormEvent<HTMLFormElement>
   ) => void;
   onCancel: () => void;
 }
@@ -30,17 +25,14 @@ const UserForm = ({
   onSubmit,
   onCancel,
 }: UserFormProps) => {
-  const isEditing =
-    editingId !== null;
+  const isEditing = editingId !== null;
 
   return (
     <section className="form-card">
-      <div className="card-header">
+      <div className="form-heading">
         <div>
           <span className="section-label">
-            {isEditing
-              ? "UPDATE USER"
-              : "NEW USER"}
+            {isEditing ? "UPDATE USER" : "NEW USER"}
           </span>
 
           <h2>
@@ -51,70 +43,76 @@ const UserForm = ({
 
           <p>
             {isEditing
-              ? "Update the user's information."
-              : "Create a new user account."}
+              ? "Update the user's information below."
+              : "Create a new user and add them to your system."}
           </p>
         </div>
 
         {isEditing && (
-          <span className="edit-badge">
+          <span className="editing-badge">
             Editing #{editingId}
           </span>
         )}
       </div>
 
-      <form onSubmit={onSubmit}>
-        <div className="form-grid">
-          <div className="form-group">
-            <label htmlFor="name">
-              Full Name
-            </label>
+      <form
+        className="user-form"
+        onSubmit={onSubmit}
+      >
+        <div className="form-group">
+          <label htmlFor="name">
+            Full Name
+          </label>
 
-            <input
-              id="name"
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={onChange}
-              placeholder="e.g. Ali Ahmed"
-            />
-          </div>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            value={formData.name}
+            onChange={onChange}
+            placeholder="Enter full name"
+            autoComplete="name"
+            disabled={loading}
+          />
+        </div>
 
-          <div className="form-group">
-            <label htmlFor="email">
-              Email Address
-            </label>
+        <div className="form-group">
+          <label htmlFor="email">
+            Email Address
+          </label>
 
-            <input
-              id="email"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={onChange}
-              placeholder="e.g. ali@gmail.com"
-            />
-          </div>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={onChange}
+            placeholder="Enter email address"
+            autoComplete="email"
+            disabled={loading}
+          />
+        </div>
 
-          <div className="form-group">
-            <label htmlFor="role">
-              Role
-            </label>
+        <div className="form-group">
+          <label htmlFor="role">
+            Role
+          </label>
 
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={onChange}
-            >
-              <option value="customer">
-                Customer
-              </option>
+          <select
+            id="role"
+            name="role"
+            value={formData.role}
+            onChange={onChange}
+            disabled={loading}
+          >
+            <option value="customer">
+              Customer
+            </option>
 
-              <option value="admin">
-                Admin
-              </option>
-            </select>
-          </div>
+            <option value="admin">
+              Admin
+            </option>
+          </select>
         </div>
 
         <div className="form-actions">
@@ -124,7 +122,7 @@ const UserForm = ({
             disabled={loading}
           >
             {loading
-              ? "Please wait..."
+              ? "Saving..."
               : isEditing
               ? "Save Changes"
               : "Add User"}

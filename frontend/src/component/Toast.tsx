@@ -10,16 +10,17 @@ const Toast = ({
   onClose,
 }: ToastProps) => {
   return (
-    <div className={`toast ${type}`}>
+    <div
+      className={`toast ${type}`}
+      role="alert"
+    >
       <div className="toast-icon">
         {type === "success" ? "✓" : "!"}
       </div>
 
       <div className="toast-content">
         <strong>
-          {type === "success"
-            ? "Success"
-            : "Error"}
+          {type === "success" ? "Success" : "Error"}
         </strong>
 
         <span>{message}</span>
@@ -29,6 +30,7 @@ const Toast = ({
         type="button"
         className="toast-close"
         onClick={onClose}
+        aria-label="Close notification"
       >
         ×
       </button>
