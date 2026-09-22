@@ -9,50 +9,79 @@ import {
   deleteUser,
 } from "../controllers/userController";
 
+import { adminOnly } from "../middleware/roleMiddleware";
+import authMiddleware from "../middleware/authMiddleware";
 
 const router = express.Router();
 
-
 // ==========================================
 // GET ALL USERS
+// LOGIN REQUIRED
 // ==========================================
 
-router.get("/", getUsers);
-
+router.get(
+  "/",
+  authMiddleware,
+  getUsers
+);
 
 // ==========================================
 // GET USER BY ID
+// LOGIN REQUIRED
 // ==========================================
 
-router.get("/:id", getUserById);
-
-
-// ==========================================
-// POST CREATE USER
-// ==========================================
-
-router.post("/", createUser);
-
+router.get(
+  "/:id",
+  authMiddleware,
+  getUserById
+);
 
 // ==========================================
-// PUT COMPLETE UPDATE
+// CREATE USER - POST
+// ADMIN ONLY
 // ==========================================
 
-router.put("/:id", updateUser);
-
+router.post(
+  "/",
+  authMiddleware,
+  adminOnly,
+  createUser
+);
 
 // ==========================================
-// PATCH PARTIAL UPDATE
+// COMPLETE UPDATE USER - PUT
+// ADMIN ONLY
 // ==========================================
 
-router.patch("/:id", patchUser);
+router.put(
+  "/:id",
+  authMiddleware,
+  adminOnly,
+  updateUser
+);
 
+// ==========================================
+// PARTIAL UPDATE USER - PATCH
+// ADMIN ONLY
+// ==========================================
+
+router.patch(
+  "/:id",
+  authMiddleware,
+  adminOnly,
+  patchUser
+);
 
 // ==========================================
 // DELETE USER
+// ADMIN ONLY
 // ==========================================
 
-router.delete("/:id", deleteUser);
-
+router.delete(
+  "/:id",
+  authMiddleware,
+  adminOnly,
+  deleteUser
+);
 
 export default router;
