@@ -1,44 +1,75 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+
+import { signup } from "../pages/services/authApi";
 
 const Signup = () => {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-  });
+  // =========================================
+  // FORM STATE
+  // =========================================
+
+  const [formData, setFormData] =
+    useState({
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+    });
+
+  // =========================================
+  // UI STATE
+  // =========================================
 
   const [showPassword, setShowPassword] =
     useState(false);
 
-  const [showConfirmPassword, setShowConfirmPassword] =
+  const [
+    showConfirmPassword,
+    setShowConfirmPassword,
+  ] = useState(false);
+
+  const [loading, setLoading] =
     useState(false);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [error, setError] =
+    useState("");
+
+  const [success, setSuccess] =
+    useState("");
+
+  // =========================================
+  // HANDLE INPUT CHANGE
+  // =========================================
 
   const handleChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const { name, value } = event.target;
+    const {
+      name,
+      value,
+    } = event.target;
 
-    setFormData((previous) => ({
-      ...previous,
-      [name]: value,
-    }));
+    setFormData(
+      (previous) => ({
+        ...previous,
+        [name]: value,
+      })
+    );
   };
+
+  // =========================================
+  // SIGNUP
+  // =========================================
 
   const handleSignup = async (
     event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
 
+    // Clear old messages
     setError("");
     setSuccess("");
 
@@ -50,6 +81,10 @@ const Signup = () => {
       confirmPassword,
     } = formData;
 
+    // =========================================
+    // VALIDATION
+    // =========================================
+
     if (
       !name ||
       !email ||
@@ -57,41 +92,55 @@ const Signup = () => {
       !password ||
       !confirmPassword
     ) {
-      setError("Please fill in all fields.");
+      setError(
+        "Please fill in all fields."
+      );
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+    if (
+      password !== confirmPassword
+    ) {
+      setError(
+        "Passwords do not match."
+      );
       return;
     }
 
-    if (password.length < 6) {
+    if (
+      password.length < 6
+    ) {
       setError(
         "Password must be at least 6 characters."
       );
       return;
     }
 
+    // =========================================
+    // API REQUEST
+    // =========================================
+
     try {
       setLoading(true);
 
-      const response = await axios.post(
-        "https://subscription-management-app-c1fa.onrender.com/api/auth/signup",
-        {
-          name,
-          email,
-          phone,
-          password,
-          confirmPassword,
-        }
-      );
+      const response = await signup({
+        name,
+        email,
+        phone,
+        password,
+        confirmPassword,
+      });
+
+      // =========================================
+      // SUCCESS MESSAGE
+      // =========================================
 
       setSuccess(
-        response.data.message ||
+        response.message ||
           "Account created successfully!"
       );
 
+      // Clear form
       setFormData({
         name: "",
         email: "",
@@ -99,6 +148,10 @@ const Signup = () => {
         password: "",
         confirmPassword: "",
       });
+
+      // =========================================
+      // GO TO LOGIN
+      // =========================================
 
       setTimeout(() => {
         navigate("/login");
@@ -120,10 +173,18 @@ const Signup = () => {
     }
   };
 
+  // =========================================
+  // UI
+  // =========================================
+
   return (
     <div className="auth-page">
 
       <div className="auth-card">
+
+        {/* =====================================
+            HEADER
+        ====================================== */}
 
         <div className="auth-header">
 
@@ -141,11 +202,19 @@ const Signup = () => {
 
         </div>
 
+        {/* =====================================
+            ERROR
+        ====================================== */}
+
         {error && (
           <div className="auth-error">
             {error}
           </div>
         )}
+
+        {/* =====================================
+            SUCCESS
+        ====================================== */}
 
         {success && (
           <div className="auth-success">
@@ -153,9 +222,15 @@ const Signup = () => {
           </div>
         )}
 
-        <form onSubmit={handleSignup}>
+        {/* =====================================
+            SIGNUP FORM
+        ====================================== */}
 
-          {/* Name */}
+        <form
+          onSubmit={handleSignup}
+        >
+
+          {/* NAME */}
 
           <div className="auth-group">
 
@@ -176,7 +251,7 @@ const Signup = () => {
 
           </div>
 
-          {/* Email */}
+          {/* EMAIL */}
 
           <div className="auth-group">
 
@@ -197,7 +272,7 @@ const Signup = () => {
 
           </div>
 
-          {/* Phone */}
+          {/* PHONE */}
 
           <div className="auth-group">
 
@@ -218,7 +293,7 @@ const Signup = () => {
 
           </div>
 
-          {/* Password */}
+          {/* PASSWORD */}
 
           <div className="auth-group">
 
@@ -248,7 +323,8 @@ const Signup = () => {
                 className="password-toggle"
                 onClick={() =>
                   setShowPassword(
-                    (previous) => !previous
+                    (previous) =>
+                      !previous
                   )
                 }
                 disabled={loading}
@@ -258,14 +334,16 @@ const Signup = () => {
                     : "Show password"
                 }
               >
-                {showPassword ? "◉" : "◌"}
+                {showPassword
+                  ? "◉"
+                  : "◌"}
               </button>
 
             </div>
 
           </div>
 
-          {/* Confirm Password */}
+          {/* CONFIRM PASSWORD */}
 
           <div className="auth-group">
 
@@ -297,7 +375,8 @@ const Signup = () => {
                 className="password-toggle"
                 onClick={() =>
                   setShowConfirmPassword(
-                    (previous) => !previous
+                    (previous) =>
+                      !previous
                   )
                 }
                 disabled={loading}
@@ -316,6 +395,10 @@ const Signup = () => {
 
           </div>
 
+          {/* =====================================
+              SIGNUP BUTTON
+          ====================================== */}
+
           <button
             type="submit"
             className="auth-submit"
@@ -328,9 +411,14 @@ const Signup = () => {
 
         </form>
 
+        {/* =====================================
+            LOGIN LINK
+        ====================================== */}
+
         <div className="auth-footer">
 
           <p>
+
             Already have an account?{" "}
 
             <button

@@ -1,77 +1,133 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+
+import { login } from "../pages/services/authApi";
 
 const Login = () => {
   const navigate = useNavigate();
 
+  // =========================================
+  // FORM STATE
+  // =========================================
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const [showPassword, setShowPassword] = useState(false);
+  // =========================================
+  // UI STATE
+  // =========================================
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  // =========================================
+  // LOGIN
+  // =========================================
 
   const handleLogin = async (
     event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
 
+    // Clear previous error
     setError("");
 
+    // Basic validation
     if (!email || !password) {
-      setError("Email and password are required");
+      setError(
+        "Email and password are required."
+      );
       return;
     }
 
     try {
       setLoading(true);
 
-      const response = await axios.post(
-        "https://subscription-management-app-c1fa.onrender.com/api/auth/login",
-        {
-          email,
-          password,
-        }
-      );
+      // Call our auth API service
+      const response = await login({
+        email,
+        password,
+      });
 
-      const { token, user } = response.data;
+      // Get token and user from backend
+      const { token, user } = response;
 
-      localStorage.setItem("token", token);
+      // =========================================
+      // SAVE AUTHENTICATION DATA
+      // =========================================
+
+      if (token) {
+        localStorage.setItem(
+          "token",
+          token
+        );
+      }
+
       localStorage.setItem(
         "user",
         JSON.stringify(user)
       );
 
+      // =========================================
+      // REDIRECT
+      // =========================================
+
       navigate("/");
+
     } catch (error: any) {
-      console.error("Login error:", error);
+      console.error(
+        "Login error:",
+        error
+      );
 
       setError(
         error.response?.data?.message ||
           "Login failed. Please try again."
       );
+
     } finally {
       setLoading(false);
     }
   };
 
+  // =========================================
+  // UI
+  // =========================================
+
   return (
     <div className="auth-page">
+
       <div className="auth-card">
 
+        {/* =====================================
+            HEADER
+        ====================================== */}
+
         <div className="auth-header">
+
           <div className="auth-logo">
             ✦
           </div>
 
-          <h1>Welcome Back</h1>
+          <h1>
+            Welcome Back
+          </h1>
 
           <p>
             Login to your account
           </p>
+
         </div>
+
+        {/* =====================================
+            ERROR
+        ====================================== */}
 
         {error && (
           <div className="auth-error">
@@ -79,11 +135,18 @@ const Login = () => {
           </div>
         )}
 
-        <form onSubmit={handleLogin}>
+        {/* =====================================
+            LOGIN FORM
+        ====================================== */}
 
-          {/* Email */}
+        <form
+          onSubmit={handleLogin}
+        >
+
+          {/* EMAIL */}
 
           <div className="auth-group">
+
             <label htmlFor="email">
               Email
             </label>
@@ -94,16 +157,20 @@ const Login = () => {
               placeholder="Enter your email"
               value={email}
               onChange={(event) =>
-                setEmail(event.target.value)
+                setEmail(
+                  event.target.value
+                )
               }
               disabled={loading}
               autoComplete="email"
             />
+
           </div>
 
-          {/* Password */}
+          {/* PASSWORD */}
 
           <div className="auth-group">
+
             <label htmlFor="password">
               Password
             </label>
@@ -120,7 +187,9 @@ const Login = () => {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(event) =>
-                  setPassword(event.target.value)
+                  setPassword(
+                    event.target.value
+                  )
                 }
                 disabled={loading}
                 autoComplete="current-password"
@@ -131,7 +200,8 @@ const Login = () => {
                 className="password-toggle"
                 onClick={() =>
                   setShowPassword(
-                    (previous) => !previous
+                    (previous) =>
+                      !previous
                   )
                 }
                 disabled={loading}
@@ -141,11 +211,18 @@ const Login = () => {
                     : "Show password"
                 }
               >
-                {showPassword ? "◉" : "◌"}
+                {showPassword
+                  ? "◉"
+                  : "◌"}
               </button>
 
             </div>
+
           </div>
+
+          {/* =====================================
+              LOGIN BUTTON
+          ====================================== */}
 
           <button
             type="submit"
@@ -159,8 +236,14 @@ const Login = () => {
 
         </form>
 
+        {/* =====================================
+            SIGNUP LINK
+        ====================================== */}
+
         <div className="auth-footer">
+
           <p>
+
             Don't have an account?{" "}
 
             <button
@@ -168,13 +251,17 @@ const Login = () => {
               onClick={() =>
                 navigate("/signup")
               }
+              disabled={loading}
             >
               Sign Up
             </button>
+
           </p>
+
         </div>
 
       </div>
+
     </div>
   );
 };
