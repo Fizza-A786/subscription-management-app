@@ -15,5 +15,6 @@
     "verbatimModuleSyntax": false
   },
 
-  "include": ["src", "../frontend/src/component"]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }
