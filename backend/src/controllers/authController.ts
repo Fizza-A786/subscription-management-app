@@ -1,24 +1,42 @@
+
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 import { users } from "../data/users";
-import { UserRole } from "../types/user";
+import { User, UserRole } from "../types/user";
 
 // ==========================================
 // SIGNUP
 // ==========================================
 
-export const signup = async (req: Request, res: Response) => {
+export const signup = async (
+  req: Request,
+  res: Response
+) => {
   try {
     // Request body se data lena
-    const { name, email, phone, password, confirmPassword } = req.body;
+    const {
+      name,
+      email,
+      phone,
+      gender,
+      password,
+      confirmPassword,
+    } = req.body;
 
     // ==========================================
     // CHECK REQUIRED FIELDS
     // ==========================================
 
-    if (!name || !email || !phone || !password || !confirmPassword) {
+    if (
+      !name ||
+      !email ||
+      !phone ||
+      !gender ||
+      !password ||
+      !confirmPassword
+    ) {
       return res.status(400).json({
         message: "All fields are required",
       });
@@ -39,7 +57,9 @@ export const signup = async (req: Request, res: Response) => {
     // ==========================================
 
     const existingUser = users.find(
-      (user) => user.email.toLowerCase() === email.toLowerCase(),
+      (user) =>
+        user.email.toLowerCase() ===
+        email.toLowerCase()
     );
 
     if (existingUser) {
@@ -52,25 +72,41 @@ export const signup = async (req: Request, res: Response) => {
     // HASH PASSWORD
     // ==========================================
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(
+      password,
+      10
+    );
 
     // ==========================================
     // CREATE UNIQUE ID
     // ==========================================
 
     const newId =
-      users.length > 0 ? Math.max(...users.map((user) => user.id)) + 1 : 1;
+      users.length > 0
+        ? Math.max(
+            ...users.map((user) => user.id)
+          ) + 1
+        : 1;
 
+    // ==========================================
+    // DETERMINE USER ROLE
+    // ==========================================
+
+const userRole: UserRole =
+  email.toLowerCase() === "devfizza@gmail.com"
+    ? "admin"
+    : "customer";
     // ==========================================
     // CREATE NEW USER
     // ==========================================
 
-    const newUser = {
+    const newUser: User = {
       id: newId,
       name,
       email,
       phone,
-      role: UserRole.CUSTOMER,
+      gender,
+      role: userRole,
       password: hashedPassword,
     };
 
@@ -93,11 +129,15 @@ export const signup = async (req: Request, res: Response) => {
         name: newUser.name,
         email: newUser.email,
         phone: newUser.phone,
+        gender: newUser.gender,
         role: newUser.role,
       },
     });
   } catch (error) {
-    console.error("Signup error:", error);
+    console.error(
+      "Signup error:",
+      error
+    );
 
     return res.status(500).json({
       message: "Server error",
@@ -109,13 +149,19 @@ export const signup = async (req: Request, res: Response) => {
 // LOGIN
 // ==========================================
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (
+  req: Request,
+  res: Response
+) => {
   try {
     // ==========================================
     // GET EMAIL AND PASSWORD
     // ==========================================
 
-    const { email, password } = req.body;
+    const {
+      email,
+      password,
+    } = req.body;
 
     // ==========================================
     // CHECK REQUIRED FIELDS
@@ -123,7 +169,8 @@ export const login = async (req: Request, res: Response) => {
 
     if (!email || !password) {
       return res.status(400).json({
-        message: "Email and password are required",
+        message:
+          "Email and password are required",
       });
     }
 
@@ -132,7 +179,9 @@ export const login = async (req: Request, res: Response) => {
     // ==========================================
 
     const user = users.find(
-      (user) => user.email.toLowerCase() === email.toLowerCase(),
+      (user) =>
+        user.email.toLowerCase() ===
+        email.toLowerCase()
     );
 
     // ==========================================
@@ -141,7 +190,8 @@ export const login = async (req: Request, res: Response) => {
 
     if (!user) {
       return res.status(401).json({
-        message: "Invalid email or password",
+        message:
+          "Invalid email or password",
       });
     }
 
@@ -149,7 +199,11 @@ export const login = async (req: Request, res: Response) => {
     // CHECK PASSWORD
     // ==========================================
 
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    const isPasswordCorrect =
+      await bcrypt.compare(
+        password,
+        user.password
+      );
 
     // ==========================================
     // WRONG PASSWORD
@@ -157,7 +211,8 @@ export const login = async (req: Request, res: Response) => {
 
     if (!isPasswordCorrect) {
       return res.status(401).json({
-        message: "Invalid email or password",
+        message:
+          "Invalid email or password",
       });
     }
 
@@ -165,7 +220,8 @@ export const login = async (req: Request, res: Response) => {
     // GET JWT SECRET
     // ==========================================
 
-    const JWT_SECRET = process.env.JWT_SECRET;
+    const JWT_SECRET =
+      process.env.JWT_SECRET;
 
     // ==========================================
     // CHECK JWT SECRET
@@ -173,7 +229,8 @@ export const login = async (req: Request, res: Response) => {
 
     if (!JWT_SECRET) {
       return res.status(500).json({
-        message: "JWT secret is not configured",
+        message:
+          "JWT secret is not configured",
       });
     }
 
@@ -190,7 +247,7 @@ export const login = async (req: Request, res: Response) => {
       JWT_SECRET,
       {
         expiresIn: "1d",
-      },
+      }
     );
 
     // ==========================================
@@ -207,27 +264,37 @@ export const login = async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        gender: user.gender,
         role: user.role,
       },
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error(
+      "Login error:",
+      error
+    );
 
     return res.status(500).json({
       message: "Server error",
     });
   }
 };
+
 // ==========================================
 // GET PROFILE - PROTECTED
 // ==========================================
 
-export const getProfile = (req: Request, res: Response) => {
+export const getProfile = (
+  req: Request,
+  res: Response
+) => {
   // Middleware ne decoded JWT ko request mein add kiya hai
   const userData = (req as any).user;
 
   // User ID se actual user find karna
-  const user = users.find((user) => user.id === userData.id);
+  const user = users.find(
+    (user) => user.id === userData.id
+  );
 
   // User nahi mila
   if (!user) {
@@ -238,14 +305,17 @@ export const getProfile = (req: Request, res: Response) => {
 
   // Password ke baghair user return karna
   return res.status(200).json({
-    message: "Profile fetched successfully",
+    message:
+      "Profile fetched successfully",
 
     user: {
       id: user.id,
       name: user.name,
       email: user.email,
       phone: user.phone,
+      gender: user.gender,
       role: user.role,
     },
   });
 };
+

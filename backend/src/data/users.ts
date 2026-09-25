@@ -1,14 +1,15 @@
-import { User, UserRole } from "../types/user";
+import type { User } from "../types/user";
 
 export const users: User[] = [
   {
     id: 1,
-    name: "Ali",
-    email: "ali@gmail.com",
+    name: "Fizza",
+    email: "devfizza@gmail.com",
     phone: "03001234567",
-    role: UserRole.ADMIN,
+    gender: "female",
+    role: "admin",
     password:
-      "$2b$10$GFRvpPKJpsD.zbTK5JL3q.czCeSZL/.gYM8QFEkDXzHl8HjVnhDzW",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiZW1haWwiOiJkZXZmaXp6YUBnbWFpbC5jb20iLCJyb2xlIjoiY3VzdG9tZXIiLCJpYXQiOjE3OTAzNDE5MTAsImV4cCI6MTc5MDQyODMxMH0.4ErFRGwyNTB63baYy4bIQwqkqxYFyBoWl8QBJ8YBMS8",
   },
 
   {
@@ -16,9 +17,10 @@ export const users: User[] = [
     name: "Ahmed",
     email: "ahmed@gmail.com",
     phone: "03111234567",
-    role: UserRole.CUSTOMER,
+    gender: "male",
+    role: "customer",
     password:
-      "$2b$10$YcZcI7KgOw/YJXxoKf5ic.DY0bMzFe9GJ.pPTcNM/94WZxDQFa6Qe",
+      "$2b$10$7PkK6oWbNSBDaEMzGZqnieX9j3U.chqVuCEDphe/LU//j8/sRNC6W",
   },
 
   {
@@ -26,8 +28,9 @@ export const users: User[] = [
     name: "Sara",
     email: "sara@gmail.com",
     phone: "03221234567",
-    role: UserRole.CUSTOMER,
+    gender: "female",
+    role: "customer",
     password:
-      "$2b$10$XT/iGSO1BscooKLvPn7vFeLIS/.uzLNrfzzOLlQywHVxbcez6BRfq",
+      "$2b$10$beREdi8Ovf2NQChYO2c02.JWBybWHewZqEtIkrBLa3g8XLUTqOzL6",
   },
 ];

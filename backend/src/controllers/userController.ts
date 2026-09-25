@@ -12,6 +12,7 @@ const safeUser = (user: any) => {
     name: user.name,
     email: user.email,
     phone: user.phone,
+    gender: user.gender,
     role: user.role,
   };
 };
@@ -71,13 +72,15 @@ export const createUser = (
     name,
     email,
     phone,
+    gender,
     role,
   } = req.body;
 
   // Validation
-  if (!name || !email || !role) {
+  if (!name || !email || !gender || !role) {
     return res.status(400).json({
-      message: "Name, email and role are required",
+      message:
+        "Name, email, gender and role are required",
     });
   }
 
@@ -98,6 +101,7 @@ export const createUser = (
     name,
     email,
     phone: phone || "",
+    gender,
     role,
     password: "",
   };
@@ -128,6 +132,7 @@ export const updateUser = (
     name,
     email,
     phone,
+    gender,
     role,
   } = req.body;
 
@@ -144,9 +149,10 @@ export const updateUser = (
   }
 
   // Validation
-  if (!name || !email || !role) {
+  if (!name || !email || !gender || !role) {
     return res.status(400).json({
-      message: "Name, email and role are required",
+      message:
+        "Name, email, gender and role are required",
     });
   }
 
@@ -159,7 +165,11 @@ export const updateUser = (
     id,
     name,
     email,
-    phone: phone || users[userIndex].phone || "",
+    phone:
+      phone ||
+      users[userIndex].phone ||
+      "",
+    gender,
     role,
     password: existingPassword,
   };
@@ -199,6 +209,7 @@ export const patchUser = (
     name,
     email,
     phone,
+    gender,
     role,
   } = req.body;
 
@@ -254,6 +265,24 @@ export const patchUser = (
   }
 
   // ==========================================
+  // GENDER UPDATE
+  // ==========================================
+
+  if (gender !== undefined) {
+    if (
+      gender !== "male" &&
+      gender !== "female"
+    ) {
+      return res.status(400).json({
+        message:
+          "Gender must be male or female",
+      });
+    }
+
+    user.gender = gender;
+  }
+
+  // ==========================================
   // ROLE UPDATE
   // ==========================================
 
@@ -263,7 +292,8 @@ export const patchUser = (
       role !== "customer"
     ) {
       return res.status(400).json({
-        message: "Role must be admin or customer",
+        message:
+          "Role must be admin or customer",
       });
     }
 
