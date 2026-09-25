@@ -1,47 +1,36 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  FaRegEye,
+  FaRegEyeSlash,
+} from "react-icons/fa";
 
 import { login } from "../pages/services/authApi";
 
 const Login = () => {
   const navigate = useNavigate();
 
-  // =========================================
-  // FORM STATE
-  // =========================================
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // =========================================
-  // UI STATE
-  // =========================================
 
   const [showPassword, setShowPassword] =
     useState(false);
 
-  const [loading, setLoading] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
-
-  // =========================================
-  // LOGIN
-  // =========================================
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleLogin = async (
     event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
 
-    // Clear previous error
     setError("");
 
-    // Basic validation
-    if (!email || !password) {
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail || !password) {
       setError(
-        "Email and password are required."
+        "Please enter your email and password."
       );
       return;
     }
@@ -49,219 +38,244 @@ const Login = () => {
     try {
       setLoading(true);
 
-      // Call our auth API service
       const response = await login({
-        email,
+        email: cleanEmail,
         password,
       });
 
-      // Get token and user from backend
       const { token, user } = response;
 
-      // =========================================
-      // SAVE AUTHENTICATION DATA
-      // =========================================
-
-      if (token) {
-        localStorage.setItem(
-          "token",
-          token
+      if (!token) {
+        setError(
+          "Login failed. Authentication token was not received."
         );
+        return;
       }
 
+      localStorage.setItem("token", token);
       localStorage.setItem(
         "user",
         JSON.stringify(user)
       );
 
-      // =========================================
-      // REDIRECT
-      // =========================================
-
-      navigate("/");
-
+      navigate("/", {
+        replace: true,
+      });
     } catch (error: any) {
-      console.error(
-        "Login error:",
-        error
-      );
+      console.error("Login error:", error);
 
       setError(
-        error.response?.data?.message ||
-          "Login failed. Please try again."
+        error?.response?.data?.message ||
+          "Invalid email or password."
       );
-
     } finally {
       setLoading(false);
     }
   };
 
-  // =========================================
-  // UI
-  // =========================================
-
   return (
     <div className="auth-page">
+      <div className="auth-container">
 
-      <div className="auth-card">
+        {/* LEFT SIDE */}
+        <div className="auth-brand-panel">
 
-        {/* =====================================
-            HEADER
-        ====================================== */}
+          <div className="auth-brand">
+            <div className="auth-brand-icon">
+              ✦
+            </div>
 
-        <div className="auth-header">
-
-          <div className="auth-logo">
-            ✦
+            <div>
+              <h2>UserFlow</h2>
+              <span>SAAS PLATFORM</span>
+            </div>
           </div>
 
-          <h1>
-            Welcome Back
-          </h1>
+          <div className="auth-brand-content">
+            <span className="auth-label">
+              USER MANAGEMENT
+            </span>
 
-          <p>
-            Login to your account
-          </p>
+            <h1>
+              Manage your users
+              <br />
+              from one workspace.
+            </h1>
+
+            <p>
+              A simple and professional workspace for
+              managing accounts, roles and user
+              information.
+            </p>
+
+            <div className="auth-features">
+
+              <div className="auth-feature">
+                <span>✓</span>
+                Secure authentication
+              </div>
+
+              <div className="auth-feature">
+                <span>✓</span>
+                Centralized user management
+              </div>
+
+              <div className="auth-feature">
+                <span>✓</span>
+                Role-based access
+              </div>
+
+            </div>
+          </div>
+
+          <div className="auth-system-status">
+            <span className="status-dot" />
+            System operational
+          </div>
 
         </div>
 
-        {/* =====================================
-            ERROR
-        ====================================== */}
+        {/* RIGHT SIDE */}
+        <div className="auth-form-panel">
 
-        {error && (
-          <div className="auth-error">
-            {error}
-          </div>
-        )}
+          <div className="auth-form-container">
 
-        {/* =====================================
-            LOGIN FORM
-        ====================================== */}
+            <div className="auth-heading">
 
-        <form
-          onSubmit={handleLogin}
-        >
+              <span className="auth-small-title">
+                WELCOME BACK
+              </span>
 
-          {/* EMAIL */}
+              <h1>
+                Sign in to your account
+              </h1>
 
-          <div className="auth-group">
+              <p>
+                Enter your details to continue to
+                your dashboard.
+              </p>
 
-            <label htmlFor="email">
-              Email
-            </label>
+            </div>
 
-            <input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(event) =>
-                setEmail(
-                  event.target.value
-                )
-              }
-              disabled={loading}
-              autoComplete="email"
-            />
+            {error && (
+              <div className="auth-message auth-error">
+                {error}
+              </div>
+            )}
 
-          </div>
+            <form
+              className="auth-form"
+              onSubmit={handleLogin}
+            >
 
-          {/* PASSWORD */}
+              <div className="auth-field">
 
-          <div className="auth-group">
+                <label htmlFor="email">
+                  Email address
+                </label>
 
-            <label htmlFor="password">
-              Password
-            </label>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    setError("");
+                  }}
+                  disabled={loading}
+                  autoComplete="email"
+                />
 
-            <div className="password-input-wrapper">
+              </div>
 
-              <input
-                id="password"
-                type={
-                  showPassword
-                    ? "text"
-                    : "password"
-                }
-                placeholder="Enter your password"
-                value={password}
-                onChange={(event) =>
-                  setPassword(
-                    event.target.value
-                  )
-                }
-                disabled={loading}
-                autoComplete="current-password"
-              />
+              <div className="auth-field">
+
+                <label htmlFor="password">
+                  Password
+                </label>
+
+                <div className="auth-password">
+
+                  <input
+                    id="password"
+                    type={
+                      showPassword
+                        ? "text"
+                        : "password"
+                    }
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(
+                        event.target.value
+                      );
+                      setError("");
+                    }}
+                    disabled={loading}
+                    autoComplete="current-password"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowPassword(
+                        (previous) =>
+                          !previous
+                      )
+                    }
+                    disabled={loading}
+                    className="auth-eye"
+                    aria-label={
+                      showPassword
+                        ? "Hide password"
+                        : "Show password"
+                    }
+                  >
+                    {showPassword ? (
+                      <FaRegEyeSlash />
+                    ) : (
+                      <FaRegEye />
+                    )}
+                  </button>
+
+                </div>
+
+              </div>
 
               <button
-                type="button"
-                className="password-toggle"
-                onClick={() =>
-                  setShowPassword(
-                    (previous) =>
-                      !previous
-                  )
-                }
+                type="submit"
+                className="auth-submit"
                 disabled={loading}
-                aria-label={
-                  showPassword
-                    ? "Hide password"
-                    : "Show password"
-                }
               >
-                {showPassword
-                  ? "◉"
-                  : "◌"}
+                {loading
+                  ? "Signing in..."
+                  : "Sign in"}
               </button>
 
+            </form>
+
+            <div className="auth-divider">
+              <span />
+              <small>OR</small>
+              <span />
+            </div>
+
+            <div className="auth-switch">
+              <span>
+                Don't have an account?
+              </span>
+
+              <Link to="/signup">
+                Create account
+              </Link>
             </div>
 
           </div>
 
-          {/* =====================================
-              LOGIN BUTTON
-          ====================================== */}
-
-          <button
-            type="submit"
-            className="auth-submit"
-            disabled={loading}
-          >
-            {loading
-              ? "Logging in..."
-              : "Login"}
-          </button>
-
-        </form>
-
-        {/* =====================================
-            SIGNUP LINK
-        ====================================== */}
-
-        <div className="auth-footer">
-
-          <p>
-
-            Don't have an account?{" "}
-
-            <button
-              type="button"
-              onClick={() =>
-                navigate("/signup")
-              }
-              disabled={loading}
-            >
-              Sign Up
-            </button>
-
-          </p>
-
         </div>
 
       </div>
-
     </div>
   );
 };

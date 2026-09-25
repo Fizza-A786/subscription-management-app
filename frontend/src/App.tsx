@@ -10,6 +10,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
 
 import Login from "./component/Login";
@@ -24,6 +25,11 @@ import {
   updateUser,
 } from "./pages/services/userApi";
 
+import {
+  getProfile,
+  logout,
+} from "./pages/services/authApi";
+
 import type {
   User,
   UserFormData,
@@ -35,33 +41,63 @@ import Toast from "./component/Toast";
 
 import "./App.css";
 
+/* =========================================
+   TOAST TYPE
+   ========================================= */
+
 interface ToastState {
   message: string;
   type: "success" | "error";
 }
 
+/* =========================================
+   INITIAL FORM DATA
+   ========================================= */
+
 const initialFormData: UserFormData = {
   name: "",
   email: "",
+  phone: "",
+  gender: "male",
   role: "customer",
 };
 
 function App() {
+  const navigate = useNavigate();
+
   /* =========================================
-     STATE
+     USER DATA
      ========================================= */
 
   const [users, setUsers] = useState<User[]>([]);
 
-  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] =
+    useState<User | null>(null);
 
-  const [saving, setSaving] = useState(false);
+  const [profileOpen, setProfileOpen] =
+    useState(false);
+
+  /* =========================================
+     LOADING STATES
+     ========================================= */
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [saving, setSaving] =
+    useState(false);
 
   const [actionLoadingId, setActionLoadingId] =
     useState<number | null>(null);
 
+  /* =========================================
+     FORM STATES
+     ========================================= */
+
   const [formData, setFormData] =
-    useState<UserFormData>(initialFormData);
+    useState<UserFormData>(
+      initialFormData
+    );
 
   const [editingId, setEditingId] =
     useState<number | null>(null);
@@ -69,8 +105,16 @@ function App() {
   const [formModalOpen, setFormModalOpen] =
     useState(false);
 
+  /* =========================================
+     DELETE STATE
+     ========================================= */
+
   const [deleteId, setDeleteId] =
     useState<number | null>(null);
+
+  /* =========================================
+     PATCH STATE
+     ========================================= */
 
   const [patchTarget, setPatchTarget] =
     useState<User | null>(null);
@@ -78,14 +122,26 @@ function App() {
   const [patchName, setPatchName] =
     useState("");
 
+  /* =========================================
+     SEARCH + FILTER
+     ========================================= */
+
   const [search, setSearch] =
     useState("");
 
   const [roleFilter, setRoleFilter] =
     useState<"all" | UserRole>("all");
 
+  /* =========================================
+     SIDEBAR
+     ========================================= */
+
   const [activePage, setActivePage] =
     useState("Dashboard");
+
+  /* =========================================
+     DARK MODE
+     ========================================= */
 
   const [darkMode, setDarkMode] =
     useState(() => {
@@ -95,11 +151,15 @@ function App() {
       return savedTheme !== "light";
     });
 
+  /* =========================================
+     TOAST
+     ========================================= */
+
   const [toast, setToast] =
     useState<ToastState | null>(null);
 
   /* =========================================
-     TOAST
+     TOAST FUNCTION
      ========================================= */
 
   const showToast = (
@@ -115,6 +175,45 @@ function App() {
       setToast(null);
     }, 3500);
   };
+
+  /* =========================================
+     GET LOGGED-IN USER PROFILE
+     ========================================= */
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      const token =
+        localStorage.getItem("token");
+
+      if (!token) {
+        setCurrentUser(null);
+        return;
+      }
+
+      try {
+        const profile =
+          await getProfile();
+
+        setCurrentUser(profile);
+      } catch (error) {
+        console.error(
+          "Error loading profile:",
+          error
+        );
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        setCurrentUser(null);
+
+        navigate("/login", {
+          replace: true,
+        });
+      }
+    };
+
+    loadProfile();
+  }, [navigate]);
 
   /* =========================================
      FETCH USERS
@@ -141,10 +240,16 @@ function App() {
       setLoading(false);
     }
   };
+useEffect(() => {
+  const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  if (!token) {
+    setLoading(false);
+    return;
+  }
+
+  void fetchUsers();
+}, []);
 
   /* =========================================
      DARK / LIGHT MODE
@@ -208,12 +313,16 @@ function App() {
      OPEN EDIT MODAL
      ========================================= */
 
-  const openEditModal = (user: User) => {
+  const openEditModal = (
+    user: User
+  ) => {
     setEditingId(user.id);
 
     setFormData({
       name: user.name,
       email: user.email,
+      phone: user.phone,
+      gender: user.gender,
       role: user.role,
     });
 
@@ -225,7 +334,9 @@ function App() {
      ========================================= */
 
   const closeFormModal = () => {
-    if (saving) return;
+    if (saving) {
+      return;
+    }
 
     setFormModalOpen(false);
 
@@ -251,7 +362,16 @@ function App() {
     const email =
       formData.email.trim();
 
-    if (!name || !email) {
+    const phone =
+      formData.phone.trim();
+
+    if (
+      !name ||
+      !email ||
+      !phone ||
+      !formData.gender ||
+      !formData.role
+    ) {
       showToast(
         "Please fill in all required fields.",
         "error"
@@ -263,7 +383,9 @@ function App() {
     try {
       setSaving(true);
 
-      /* UPDATE USER */
+      /* =====================================
+         UPDATE USER
+         ===================================== */
 
       if (editingId !== null) {
         const updatedUser =
@@ -273,6 +395,7 @@ function App() {
               ...formData,
               name,
               email,
+              phone,
             }
           );
 
@@ -290,7 +413,9 @@ function App() {
         );
       }
 
-      /* CREATE USER */
+      /* =====================================
+         CREATE USER
+         ===================================== */
 
       else {
         const newUser =
@@ -298,6 +423,7 @@ function App() {
             ...formData,
             name,
             email,
+            phone,
           });
 
         setUsers((previous) => [
@@ -337,7 +463,9 @@ function App() {
      PATCH
      ========================================= */
 
-  const openPatchModal = (user: User) => {
+  const openPatchModal = (
+    user: User
+  ) => {
     setPatchTarget(user);
 
     setPatchName(user.name);
@@ -473,6 +601,22 @@ function App() {
     };
 
   /* =========================================
+     LOGOUT
+     ========================================= */
+
+  const handleLogout = () => {
+    logout();
+
+    setCurrentUser(null);
+
+    setProfileOpen(false);
+
+    navigate("/login", {
+      replace: true,
+    });
+  };
+
+  /* =========================================
      SEARCH + FILTER
      ========================================= */
 
@@ -563,7 +707,23 @@ function App() {
           behavior: "smooth",
         });
     }
+
+    if (page === "Dashboard") {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
   };
+
+  /* =========================================
+     USER AVATAR LETTER
+     ========================================= */
+
+  const userInitial =
+    currentUser?.name
+      ?.charAt(0)
+      .toUpperCase() || "U";
 
   /* =========================================
      RENDER
@@ -598,6 +758,7 @@ function App() {
         path="/"
         element={
           <ProtectedRoute>
+
             <div
               className={`app ${
                 darkMode
@@ -785,41 +946,134 @@ function App() {
 
                 </div>
 
-                {/* SIDEBAR FOOTER */}
+                {/* =====================================
+                    SIDEBAR FOOTER
+                    ===================================== */}
 
                 <div className="sidebar-footer">
 
+                  {/* API STATUS */}
+
                   <div className="sidebar-status">
-
                     <span className="status-dot"></span>
-
-                    <span>
-                      API Connected
-                    </span>
-
+                    <span>API Connected</span>
                   </div>
 
-                  <div className="sidebar-user">
+                  {/* PROFILE MENU */}
 
-                    <div className="profile-avatar">
-                      F
-                    </div>
+                  <div className={`sidebar-profile-wrap ${
+                    profileOpen ? "is-open" : ""
+                  }`}>
 
-                    <div className="profile-info">
+                    {profileOpen && (
+                      <div className="sidebar-profile-menu">
 
-                      <strong>
-                        Admin
-                      </strong>
+                        <div className="sidebar-profile-header">
 
-                      <span>
-                        Manage account
+                          <div
+                            className={`profile-large-avatar ${
+                              currentUser?.gender ===
+                              "female"
+                                ? "female-avatar"
+                                : "male-avatar"
+                            }`}
+                          >
+                            {userInitial}
+                          </div>
+
+                          <div className="sidebar-profile-heading">
+                            <strong>
+                              {currentUser?.name || "User"}
+                            </strong>
+
+                            <span>
+                              {currentUser?.role || "customer"}
+                            </span>
+                          </div>
+
+                        </div>
+
+                        <div className="profile-divider" />
+
+                        <div className="profile-details">
+
+                          <div className="profile-detail">
+                            <span>Email</span>
+                            <strong>
+                              {currentUser?.email || "-"}
+                            </strong>
+                          </div>
+
+                          <div className="profile-detail">
+                            <span>Phone</span>
+                            <strong>
+                              {currentUser?.phone || "-"}
+                            </strong>
+                          </div>
+
+                          <div className="profile-detail">
+                            <span>Role</span>
+                            <strong>
+                              {currentUser?.role || "-"}
+                            </strong>
+                          </div>
+
+                        </div>
+
+                        <div className="profile-divider" />
+
+                        <button
+                          type="button"
+                          className="sidebar-logout-button"
+                          onClick={handleLogout}
+                        >
+                          <span>↪</span>
+                          Sign out
+                        </button>
+
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      className="sidebar-user"
+                      onClick={() =>
+                        setProfileOpen(
+                          (previous) => !previous
+                        )
+                      }
+                      aria-expanded={profileOpen}
+                      aria-label="Open user profile"
+                    >
+
+                      <div
+                        className={`profile-avatar ${
+                          currentUser?.gender ===
+                          "female"
+                            ? "female-avatar"
+                            : "male-avatar"
+                        }`}
+                      >
+                        {userInitial}
+                      </div>
+
+                      <div className="profile-info">
+
+                        <strong>
+                          {currentUser?.name || "User"}
+                        </strong>
+
+                        <span>
+                          {currentUser?.role || "customer"}
+                        </span>
+
+                      </div>
+
+                      <span className="profile-more">
+                        {profileOpen ? "⌃" : "›"}
                       </span>
 
-                    </div>
-
-                    <span className="profile-more">
-                      ⋮
-                    </span>
+                    </button>
 
                   </div>
 
@@ -833,7 +1087,9 @@ function App() {
 
               <div className="main-area">
 
-                {/* TOPBAR */}
+                {/* =====================================
+                    TOPBAR
+                    ===================================== */}
 
                 <header className="topbar">
 
@@ -878,6 +1134,8 @@ function App() {
 
                   <div className="topbar-actions">
 
+                    {/* DARK MODE */}
+
                     <button
                       type="button"
                       className="topbar-icon"
@@ -898,6 +1156,8 @@ function App() {
                         : "☾"}
                     </button>
 
+                    {/* NOTIFICATIONS */}
+
                     <button
                       type="button"
                       className="topbar-icon"
@@ -911,19 +1171,19 @@ function App() {
                       ◌
                     </button>
 
-                    <div className="topbar-avatar">
-                      F
-                    </div>
-
                   </div>
 
                 </header>
 
-                {/* CONTENT */}
+                {/* =====================================
+                    CONTENT
+                    ===================================== */}
 
                 <main className="dashboard">
 
-                  {/* HEADER */}
+                  {/* =================================
+                      HEADER
+                      ================================= */}
 
                   <section className="dashboard-heading">
 
@@ -934,7 +1194,10 @@ function App() {
                       </h1>
 
                       <p>
-                        Welcome back! Here's
+                        Welcome back
+                        {currentUser?.name
+                          ? `, ${currentUser.name}`
+                          : ""}! Here's
                         what's happening with
                         your users.
                       </p>
@@ -948,16 +1211,20 @@ function App() {
                         openAddModal
                       }
                     >
+
                       <span>
                         ＋
                       </span>
 
                       Add User
+
                     </button>
 
                   </section>
 
-                  {/* STATS */}
+                  {/* =================================
+                      STATS
+                      ================================= */}
 
                   <section className="stats-grid">
 
@@ -1091,7 +1358,9 @@ function App() {
 
                   </section>
 
-                  {/* RECENT USERS + QUICK ACTIONS */}
+                  {/* =================================
+                      RECENT USERS + QUICK ACTIONS
+                      ================================= */}
 
                   <section className="middle-grid">
 
@@ -1158,9 +1427,11 @@ function App() {
                               >
 
                                 <div
-                                  className={`user-avatar avatar-${
-                                    (user.id % 5) +
-                                    1
+                                  className={`user-avatar ${
+                                    user.gender ===
+                                    "female"
+                                      ? "female-avatar"
+                                      : "male-avatar"
                                   }`}
                                 >
                                   {user.name
@@ -1329,7 +1600,9 @@ function App() {
 
                   </section>
 
-                  {/* SMALL INFORMATION CARDS */}
+                  {/* =================================
+                      SMALL INFORMATION CARDS
+                      ================================= */}
 
                   <section className="bottom-grid">
 
@@ -1491,7 +1764,9 @@ function App() {
 
                   </section>
 
-                  {/* USER MANAGEMENT */}
+                  {/* =================================
+                      USER MANAGEMENT
+                      ================================= */}
 
                   <section
                     className="users-section"
@@ -1534,6 +1809,8 @@ function App() {
                       </button>
 
                     </div>
+
+                    {/* TOOLBAR */}
 
                     <div className="users-toolbar">
 
@@ -1597,6 +1874,8 @@ function App() {
 
                     </div>
 
+                    {/* LOADING */}
+
                     {loading ? (
 
                       <div className="table-loading">
@@ -1611,6 +1890,8 @@ function App() {
 
                     ) : filteredUsers.length ===
                       0 ? (
+
+                      /* EMPTY */
 
                       <div className="empty-users">
 
@@ -1659,6 +1940,8 @@ function App() {
 
                     ) : (
 
+                      /* TABLE */
+
                       <div className="table-wrapper">
 
                         <table className="users-table">
@@ -1704,14 +1987,18 @@ function App() {
                                   key={user.id}
                                 >
 
+                                  {/* USER */}
+
                                   <td>
 
                                     <div className="table-user">
 
                                       <div
-                                        className={`table-avatar avatar-${
-                                          (user.id % 5) +
-                                          1
+                                        className={`table-avatar ${
+                                          user.gender ===
+                                          "female"
+                                            ? "female-avatar"
+                                            : "male-avatar"
                                         }`}
                                       >
                                         {user.name
@@ -1726,7 +2013,7 @@ function App() {
                                         </strong>
 
                                         <span>
-                                          User
+                                          {user.gender}
                                         </span>
 
                                       </div>
@@ -1735,9 +2022,13 @@ function App() {
 
                                   </td>
 
+                                  {/* EMAIL */}
+
                                   <td className="email-column">
                                     {user.email}
                                   </td>
+
+                                  {/* ROLE */}
 
                                   <td>
 
@@ -1748,6 +2039,8 @@ function App() {
                                     </span>
 
                                   </td>
+
+                                  {/* STATUS */}
 
                                   <td>
 
@@ -1761,9 +2054,13 @@ function App() {
 
                                   </td>
 
+                                  {/* ID */}
+
                                   <td className="id-column">
                                     #{user.id}
                                   </td>
+
+                                  {/* ACTIONS */}
 
                                   <td>
 
@@ -1893,6 +2190,8 @@ function App() {
 
                     <div className="form-grid">
 
+                      {/* NAME */}
+
                       <div className="form-field full">
 
                         <label htmlFor="name">
@@ -1916,6 +2215,8 @@ function App() {
 
                       </div>
 
+                      {/* EMAIL */}
+
                       <div className="form-field full">
 
                         <label htmlFor="email">
@@ -1938,6 +2239,65 @@ function App() {
                         />
 
                       </div>
+
+                      {/* PHONE */}
+
+                      <div className="form-field full">
+
+                        <label htmlFor="phone">
+                          Phone Number
+                        </label>
+
+                        <input
+                          id="phone"
+                          name="phone"
+                          type="tel"
+                          placeholder="03001234567"
+                          value={
+                            formData.phone
+                          }
+                          onChange={
+                            handleChange
+                          }
+                          disabled={saving}
+                          autoComplete="tel"
+                        />
+
+                      </div>
+
+                      {/* GENDER */}
+
+                      <div className="form-field full">
+
+                        <label htmlFor="gender">
+                          Gender
+                        </label>
+
+                        <select
+                          id="gender"
+                          name="gender"
+                          value={
+                            formData.gender
+                          }
+                          onChange={
+                            handleChange
+                          }
+                          disabled={saving}
+                        >
+
+                          <option value="male">
+                            Male
+                          </option>
+
+                          <option value="female">
+                            Female
+                          </option>
+
+                        </select>
+
+                      </div>
+
+                      {/* ROLE */}
 
                       <div className="form-field full">
 
@@ -1970,6 +2330,8 @@ function App() {
                       </div>
 
                     </div>
+
+                    {/* FOOTER */}
 
                     <div className="modal-footer">
 
@@ -2222,6 +2584,7 @@ function App() {
               )}
 
             </div>
+
           </ProtectedRoute>
         }
       />

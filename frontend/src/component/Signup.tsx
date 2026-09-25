@@ -1,124 +1,102 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
+
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
+
+import {
+  FaRegEye,
+  FaRegEyeSlash,
+} from "react-icons/fa";
 
 import { signup } from "../pages/services/authApi";
+
+import type { Gender } from "../types/user";
 
 const Signup = () => {
   const navigate = useNavigate();
 
-  // =========================================
-  // FORM STATE
-  // =========================================
-
-  const [formData, setFormData] =
-    useState({
-      name: "",
-      email: "",
-      phone: "",
-      password: "",
-      confirmPassword: "",
-    });
-
-  // =========================================
-  // UI STATE
-  // =========================================
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    gender: "male" as Gender,
+    password: "",
+    confirmPassword: "",
+  });
 
   const [showPassword, setShowPassword] =
     useState(false);
 
-  const [
-    showConfirmPassword,
-    setShowConfirmPassword,
-  ] = useState(false);
-
-  const [loading, setLoading] =
+  const [showConfirmPassword, setShowConfirmPassword] =
     useState(false);
 
-  const [error, setError] =
-    useState("");
-
-  const [success, setSuccess] =
-    useState("");
-
-  // =========================================
-  // HANDLE INPUT CHANGE
-  // =========================================
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: ChangeEvent<
+      HTMLInputElement | HTMLSelectElement
+    >
   ) => {
-    const {
-      name,
-      value,
-    } = event.target;
+    const { name, value } = event.target;
 
-    setFormData(
-      (previous) => ({
-        ...previous,
-        [name]: value,
-      })
-    );
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+
+    setError("");
+    setSuccess("");
   };
 
-  // =========================================
-  // SIGNUP
-  // =========================================
-
-  const handleSignup = async (
-    event: React.FormEvent<HTMLFormElement>
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
 
-    // Clear old messages
     setError("");
     setSuccess("");
 
-    const {
-      name,
-      email,
-      phone,
-      password,
-      confirmPassword,
-    } = formData;
-
-    // =========================================
-    // VALIDATION
-    // =========================================
+    const name = formData.name.trim();
+    const email = formData.email.trim();
+    const phone = formData.phone.trim();
 
     if (
       !name ||
       !email ||
       !phone ||
-      !password ||
-      !confirmPassword
+      !formData.password ||
+      !formData.confirmPassword
     ) {
       setError(
-        "Please fill in all fields."
+        "Please complete all required fields."
       );
       return;
     }
 
-    if (
-      password !== confirmPassword
-    ) {
-      setError(
-        "Passwords do not match."
-      );
-      return;
-    }
-
-    if (
-      password.length < 6
-    ) {
+    if (formData.password.length < 6) {
       setError(
         "Password must be at least 6 characters."
       );
       return;
     }
 
-    // =========================================
-    // API REQUEST
-    // =========================================
+    if (
+      formData.password !==
+      formData.confirmPassword
+    ) {
+      setError(
+        "Passwords do not match."
+      );
+      return;
+    }
 
     try {
       setLoading(true);
@@ -127,34 +105,30 @@ const Signup = () => {
         name,
         email,
         phone,
-        password,
-        confirmPassword,
+        gender: formData.gender,
+        password: formData.password,
+        confirmPassword:
+          formData.confirmPassword,
       });
-
-      // =========================================
-      // SUCCESS MESSAGE
-      // =========================================
 
       setSuccess(
         response.message ||
-          "Account created successfully!"
+          "Account created successfully."
       );
 
-      // Clear form
       setFormData({
         name: "",
         email: "",
         phone: "",
+        gender: "male",
         password: "",
         confirmPassword: "",
       });
 
-      // =========================================
-      // GO TO LOGIN
-      // =========================================
-
       setTimeout(() => {
-        navigate("/login");
+        navigate("/login", {
+          replace: true,
+        });
       }, 1200);
 
     } catch (error: any) {
@@ -164,7 +138,7 @@ const Signup = () => {
       );
 
       setError(
-        error.response?.data?.message ||
+        error?.response?.data?.message ||
           "Signup failed. Please try again."
       );
 
@@ -173,265 +147,326 @@ const Signup = () => {
     }
   };
 
-  // =========================================
-  // UI
-  // =========================================
-
   return (
     <div className="auth-page">
 
-      <div className="auth-card">
+      <div className="auth-container">
 
-        {/* =====================================
-            HEADER
-        ====================================== */}
+        {/* LEFT SIDE */}
+        <div className="auth-brand-panel">
 
-        <div className="auth-header">
+          <div className="auth-brand">
 
-          <div className="auth-logo">
-            ✦
+            <div className="auth-brand-icon">
+              ✦
+            </div>
+
+            <div>
+              <h2>UserFlow</h2>
+              <span>SAAS PLATFORM</span>
+            </div>
+
           </div>
 
-          <h1>
-            Create Account
-          </h1>
+          <div className="auth-brand-content">
 
-          <p>
-            Create your UserFlow account
-          </p>
+            <span className="auth-label">
+              GET STARTED
+            </span>
+
+            <h1>
+              Create your
+              <br />
+              UserFlow account.
+            </h1>
+
+            <p>
+              Set up your account and get access
+              to a clean workspace for managing
+              your users and accounts.
+            </p>
+
+            <div className="auth-features">
+
+              <div className="auth-feature">
+                <span>✓</span>
+                Quick account setup
+              </div>
+
+              <div className="auth-feature">
+                <span>✓</span>
+                Professional dashboard
+              </div>
+
+              <div className="auth-feature">
+                <span>✓</span>
+                Secure account access
+              </div>
+
+            </div>
+
+          </div>
+
+          <div className="auth-system-status">
+            <span className="status-dot" />
+            System operational
+          </div>
 
         </div>
 
-        {/* =====================================
-            ERROR
-        ====================================== */}
+        {/* RIGHT SIDE */}
+        <div className="auth-form-panel">
 
-        {error && (
-          <div className="auth-error">
-            {error}
-          </div>
-        )}
+          <div className="auth-form-container">
 
-        {/* =====================================
-            SUCCESS
-        ====================================== */}
+            <div className="auth-heading">
 
-        {success && (
-          <div className="auth-success">
-            {success}
-          </div>
-        )}
+              <span className="auth-small-title">
+                CREATE ACCOUNT
+              </span>
 
-        {/* =====================================
-            SIGNUP FORM
-        ====================================== */}
+              <h1>
+                Create your account
+              </h1>
 
-        <form
-          onSubmit={handleSignup}
-        >
-
-          {/* NAME */}
-
-          <div className="auth-group">
-
-            <label htmlFor="name">
-              Full Name
-            </label>
-
-            <input
-              id="name"
-              name="name"
-              type="text"
-              placeholder="Enter your full name"
-              value={formData.name}
-              onChange={handleChange}
-              disabled={loading}
-              autoComplete="name"
-            />
-
-          </div>
-
-          {/* EMAIL */}
-
-          <div className="auth-group">
-
-            <label htmlFor="email">
-              Email
-            </label>
-
-            <input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChange={handleChange}
-              disabled={loading}
-              autoComplete="email"
-            />
-
-          </div>
-
-          {/* PHONE */}
-
-          <div className="auth-group">
-
-            <label htmlFor="phone">
-              Phone
-            </label>
-
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              placeholder="Enter your phone number"
-              value={formData.phone}
-              onChange={handleChange}
-              disabled={loading}
-              autoComplete="tel"
-            />
-
-          </div>
-
-          {/* PASSWORD */}
-
-          <div className="auth-group">
-
-            <label htmlFor="password">
-              Password
-            </label>
-
-            <div className="password-input-wrapper">
-
-              <input
-                id="password"
-                name="password"
-                type={
-                  showPassword
-                    ? "text"
-                    : "password"
-                }
-                placeholder="Create a password"
-                value={formData.password}
-                onChange={handleChange}
-                disabled={loading}
-                autoComplete="new-password"
-              />
-
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() =>
-                  setShowPassword(
-                    (previous) =>
-                      !previous
-                  )
-                }
-                disabled={loading}
-                aria-label={
-                  showPassword
-                    ? "Hide password"
-                    : "Show password"
-                }
-              >
-                {showPassword
-                  ? "◉"
-                  : "◌"}
-              </button>
+              <p>
+                Fill in your details to get
+                started with UserFlow.
+              </p>
 
             </div>
 
-          </div>
+            {error && (
+              <div className="auth-message auth-error">
+                {error}
+              </div>
+            )}
 
-          {/* CONFIRM PASSWORD */}
+            {success && (
+              <div className="auth-message auth-success">
+                {success}
+              </div>
+            )}
 
-          <div className="auth-group">
-
-            <label htmlFor="confirmPassword">
-              Confirm Password
-            </label>
-
-            <div className="password-input-wrapper">
-
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type={
-                  showConfirmPassword
-                    ? "text"
-                    : "password"
-                }
-                placeholder="Confirm your password"
-                value={
-                  formData.confirmPassword
-                }
-                onChange={handleChange}
-                disabled={loading}
-                autoComplete="new-password"
-              />
-
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() =>
-                  setShowConfirmPassword(
-                    (previous) =>
-                      !previous
-                  )
-                }
-                disabled={loading}
-                aria-label={
-                  showConfirmPassword
-                    ? "Hide password"
-                    : "Show password"
-                }
-              >
-                {showConfirmPassword
-                  ? "◉"
-                  : "◌"}
-              </button>
-
-            </div>
-
-          </div>
-
-          {/* =====================================
-              SIGNUP BUTTON
-          ====================================== */}
-
-          <button
-            type="submit"
-            className="auth-submit"
-            disabled={loading}
-          >
-            {loading
-              ? "Creating Account..."
-              : "Create Account"}
-          </button>
-
-        </form>
-
-        {/* =====================================
-            LOGIN LINK
-        ====================================== */}
-
-        <div className="auth-footer">
-
-          <p>
-
-            Already have an account?{" "}
-
-            <button
-              type="button"
-              onClick={() =>
-                navigate("/login")
-              }
-              disabled={loading}
+            <form
+              className="auth-form signup-form"
+              onSubmit={handleSubmit}
             >
-              Login
-            </button>
 
-          </p>
+              {/* NAME */}
+              <div className="auth-field">
+
+                <label htmlFor="name">
+                  Full name
+                </label>
+
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="Your full name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  disabled={loading}
+                  autoComplete="name"
+                />
+
+              </div>
+
+              {/* EMAIL */}
+              <div className="auth-field">
+
+                <label htmlFor="email">
+                  Email address
+                </label>
+
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  disabled={loading}
+                  autoComplete="email"
+                />
+
+              </div>
+
+              {/* PHONE */}
+              <div className="auth-field">
+
+                <label htmlFor="phone">
+                  Phone number
+                </label>
+
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="+92 300 1234567"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  disabled={loading}
+                  autoComplete="tel"
+                />
+
+              </div>
+
+              {/* GENDER */}
+              <div className="auth-field">
+
+                <label htmlFor="gender">
+                  Gender
+                </label>
+
+                <select
+                  id="gender"
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  disabled={loading}
+                >
+                  <option value="male">
+                    Male
+                  </option>
+
+                  <option value="female">
+                    Female
+                  </option>
+
+                  <option value="other">
+                    Other
+                  </option>
+                </select>
+
+              </div>
+
+              {/* PASSWORD */}
+              <div className="auth-field">
+
+                <label htmlFor="password">
+                  Password
+                </label>
+
+                <div className="auth-password">
+
+                  <input
+                    id="password"
+                    name="password"
+                    type={
+                      showPassword
+                        ? "text"
+                        : "password"
+                    }
+                    placeholder="At least 6 characters"
+                    value={formData.password}
+                    onChange={handleChange}
+                    disabled={loading}
+                    autoComplete="new-password"
+                  />
+
+                  <button
+                    type="button"
+                    className="auth-eye"
+                    onClick={() =>
+                      setShowPassword(
+                        (previous) =>
+                          !previous
+                      )
+                    }
+                    disabled={loading}
+                  >
+                    {showPassword ? (
+                      <FaRegEyeSlash />
+                    ) : (
+                      <FaRegEye />
+                    )}
+                  </button>
+
+                </div>
+
+              </div>
+
+              {/* CONFIRM PASSWORD */}
+              <div className="auth-field">
+
+                <label htmlFor="confirmPassword">
+                  Confirm password
+                </label>
+
+                <div className="auth-password">
+
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={
+                      showConfirmPassword
+                        ? "text"
+                        : "password"
+                    }
+                    placeholder="Repeat your password"
+                    value={
+                      formData.confirmPassword
+                    }
+                    onChange={handleChange}
+                    disabled={loading}
+                    autoComplete="new-password"
+                  />
+
+                  <button
+                    type="button"
+                    className="auth-eye"
+                    onClick={() =>
+                      setShowConfirmPassword(
+                        (previous) =>
+                          !previous
+                      )
+                    }
+                    disabled={loading}
+                  >
+                    {showConfirmPassword ? (
+                      <FaRegEyeSlash />
+                    ) : (
+                      <FaRegEye />
+                    )}
+                  </button>
+
+                </div>
+
+              </div>
+
+              <button
+                type="submit"
+                className="auth-submit"
+                disabled={loading}
+              >
+                {loading
+                  ? "Creating account..."
+                  : "Create account"}
+              </button>
+
+            </form>
+
+            <div className="auth-divider">
+              <span />
+              <small>OR</small>
+              <span />
+            </div>
+
+            <div className="auth-switch">
+
+              <span>
+                Already have an account?
+              </span>
+
+              <Link to="/login">
+                Sign in
+              </Link>
+
+            </div>
+
+          </div>
 
         </div>
 

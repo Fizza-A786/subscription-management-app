@@ -1,4 +1,4 @@
-import type { User } from "./user";
+import type { Gender, UserRole } from "./user";
 
 export interface LoginData {
   email: string;
@@ -9,12 +9,22 @@ export interface SignupData {
   name: string;
   email: string;
   phone: string;
+  gender: Gender;
   password: string;
   confirmPassword: string;
 }
 
+export interface AuthUser {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  gender: Gender;
+  role: UserRole;
+}
+
 export interface AuthResponse {
   message: string;
-  token?: string;
-  user: User;
+  token: string;
+  user: AuthUser;
 }
